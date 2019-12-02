@@ -1,24 +1,38 @@
-
-// server.js
-import fs from "fs";
+import * as azureDevOpsClient from 'azure-devops-node-api';
 import git from 'nodegit';
+import fs from "fs";
 
-import { getGitAPI, generateGitOption } from './azure-git';
+export const getGitAPI = (orgUrl, token) => {
+    const authHandler = azureDevOpsClient.getPersonalAccessTokenHandler(token);
+    const gitConnection = new azureDevOpsClient.WebApi(orgUrl, authHandler);
+    return gitConnection.getGitApi();
+}
 
-import dotenv from 'dotenv'
-dotenv.config()
 
-const sourceToken = process.env.SRC_PROJECT_TOKEN
-const destToken = process.env.DEST_PROJECT_TOKEN
+export const generateGitOption = (user, sourceToken) => {
+    return ({
+        callbacks: {
+            certificateCheck: () => 1,
+            credentials: (url, username) => {
+                if (url.startsWith('https://')) {
+                    return git.Cred.userpassPlaintextNew(user, sourceToken)
+                } else {
+                    return git.Cred.sshKeyFromAgent(username)
+                }
+            }
+        },
+    })
+};
 
-const srcOrgUrl = `https://dev.azure.com/${process.env.SRC_ORG_NAME}`
-const destOrgUrl = `https://dev.azure.com/${process.env.DEST_ORG_NAME}`
-const destProjectName = process.env.DEST_PROJECT_NAME
 
-const srcFetchOpts = generateGitOption("bywang", sourceToken);
-const destFetchOpts = generateGitOption("baiyuan.wang", destToken);
 
-async function main() {
+async function sync(src, dest, destProjectName) {
+    const sourceToken = src.token
+    const destToken = dest.token
+    const srcOrgUrl = `https://dev.azure.com/${src.orgName}`
+    const destOrgUrl = `https://dev.azure.com/${dest.orgName}`
+    const srcFetchOpts = generateGitOption("bywang", sourceToken);
+    const destFetchOpts = generateGitOption("baiyuan.wang", destToken);
     const srcGitAPI = await getGitAPI(srcOrgUrl, sourceToken);
     const destGitAPI = await getGitAPI(destOrgUrl, destToken);
     const allReposInDestProject = await destGitAPI.getRepositories(destProjectName);
@@ -35,7 +49,7 @@ async function main() {
             allReposInDestProject.push(repo)
             return Promise.resolve(repo)
         }).catch(err => {
-            return Promise.reject(new Error(`Repo<${repoName}>: created failed`, err))
+            return Promise.reject(new Error(`Repo<${repoName}>: created failed${err.message}`))
         });
     };
 
@@ -106,4 +120,4 @@ async function main() {
     });
 }
 
-main();
+export default sync;
