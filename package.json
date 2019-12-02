@@ -1,0 +1,27 @@
+{
+  "name": "git-sync",
+  "version": "1.0.0",
+  "description": "An nodejs app to sync a git project to another",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel index.js --out-dir build",
+    "dev": "babel-watch index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.7.4",
+    "@babel/core": "^7.7.4",
+    "@babel/plugin-transform-runtime": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/runtime": "^7.7.4",
+    "babel-watch": "^7.0.0"
+  },
+  "dependencies": {
+    "azure-devops-node-api": "^9.0.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "nodegit": "^0.26.2"
+  }
+}
